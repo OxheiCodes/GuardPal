@@ -119,6 +119,36 @@ body {
     background-color: #e9ecef;
 }
 
+/* Profile styles */
+.profile-image-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-image-edit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: #fff;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-edit-btn {
+    font-size: 0.85rem;
+}
+
 /* Animations */
 .fade-in {
     opacity: 0;
@@ -128,4 +158,30 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sticky footer */
+.min-vh-100 {
+    min-height: 100vh;
+}
+
+/* Timeline for work experience */
+.timeline {
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(16.66% - 1px);
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+@media (max-width: 767.98px) {
+    .timeline::before {
+        left: 20px;
+    }
 }

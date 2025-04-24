@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Clear input and scroll to bottom
                     messageInput.value = '';
                     chatBox.scrollTop = chatBox.scrollHeight;
+                    
+                    // Focus input field for next message
+                    messageInput.focus();
                 } else {
                     alert('Failed to send message. Please try again.');
                 }
@@ -77,4 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 5000);
     }
+    
+    // Add animation effects
+    anime({
+        targets: '.message',
+        translateY: [10, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100),
+        duration: 500,
+        easing: 'easeOutQuad'
+    });
 });

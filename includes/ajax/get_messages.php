@@ -23,7 +23,7 @@ $conn = getDBConnection();
 
 try {
     $stmt = $conn->prepare("
-        SELECT m.*, u.username as sender_name
+        SELECT m.*, u.username as sender_name, u.full_name, u.profile_image
         FROM messages m
         JOIN users u ON m.sender_id = u.id
         WHERE (m.sender_id = ? AND m.receiver_id = ?) 
@@ -39,6 +39,8 @@ try {
         return [
             'message' => $message['message'],
             'is_sent' => $message['sender_id'] == $currentUserId,
+            'sender_name' => $message['full_name'] ?: $message['sender_name'],
+            'sender_image' => $message['profile_image'],
             'formatted_time' => date('M j, g:i a', strtotime($message['created_at']))
         ];
     }, $messages);

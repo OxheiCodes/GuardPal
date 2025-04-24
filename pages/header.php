@@ -14,10 +14,10 @@ require_once '../includes/config.php';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.php">GuardPal</a>
+            <a class="navbar-brand" href="<?php echo SITE_URL; ?>">GuardPal</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -34,10 +34,21 @@ require_once '../includes/config.php';
                             <a class="nav-link" href="bookmarks.php">Bookmarks</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="chat.php">Messages</a>
+                            <a class="nav-link" href="connections.php">Network</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="logout.php">Logout</a>
+                            <a class="nav-link" href="chat.php">Messages</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+                                Profile
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li><a class="dropdown-item" href="profile.php">View Profile</a></li>
+                                <li><a class="dropdown-item" href="edit-profile.php">Edit Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+                            </ul>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
@@ -51,3 +62,4 @@ require_once '../includes/config.php';
             </div>
         </div>
     </nav>
+    <div class="flex-grow-1">
