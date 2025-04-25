@@ -23,6 +23,20 @@ if (!$receiverId || !$message) {
 $conn = getDBConnection();
 
 try {
+    // Check if these users are connected
+    $stmt = $conn->prepare("
+        SELECT 1 FROM connections 
+        WHERE ((requester_id = ? AND receiver_id = ?) OR (requester_id = ? AND receiver_id = ?))
+        AND status = 'accepted'
+    ");
+    $stmt->execute([$senderId, $receiverId, $receiverId, $senderId]);
+    $isConnected = $stmt->fetchColumn();
+    
+    if (!$isConnected) {
+        echo json_encode(['success' => false, 'message' => 'You must be connected to message this user']);
+        exit();
+    }
+    
     // Check if chat room exists, if not create one
     $stmt = $conn->prepare("
         SELECT id FROM chat_rooms 

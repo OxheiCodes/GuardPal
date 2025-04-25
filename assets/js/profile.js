@@ -64,6 +64,86 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Preview profile image before upload
+    const profileImageInput = document.getElementById('profile_image');
+    const profilePreview = document.getElementById('profile-preview');
+    
+    if (profileImageInput && profilePreview) {
+        profileImageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+    
+    // SIA License Number Validation
+    const siaLicenseInput = document.getElementById('sia_license_number');
+    
+    if (siaLicenseInput) {
+        // Format as user types (only allow numbers)
+        siaLicenseInput.addEventListener('input', function() {
+            // Remove any non-digit characters
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 16);
+            
+            // Validate field
+            if (this.value.length > 0 && this.value.length !== 16) {
+                this.classList.add('is-invalid');
+                const feedback = this.nextElementSibling || document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'SIA License Number must be exactly 16 digits';
+                if (!this.nextElementSibling) {
+                    this.parentNode.appendChild(feedback);
+                }
+            } else {
+                this.classList.remove('is-invalid');
+                if (this.nextElementSibling && this.nextElementSibling.className === 'invalid-feedback') {
+                    this.nextElementSibling.remove();
+                }
+            }
+        });
+        
+        // Format on blur (add spaces for readability)
+        siaLicenseInput.addEventListener('blur', function() {
+            if (this.value.length === 16) {
+                // Add a space every 4 digits for display
+                const formattedValue = this.value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                this.setAttribute('data-formatted', formattedValue);
+            }
+        });
+        
+        // Return to raw format on focus
+        siaLicenseInput.addEventListener('focus', function() {
+            this.value = this.value.replace(/\s/g, '');
+        });
+    }
+    
+    // Work experience current job checkbox
+    const isCurrentCheckbox = document.getElementById('is_current');
+    const endDateGroup = document.getElementById('end-date-group');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (isCurrentCheckbox && endDateGroup && endDateInput) {
+        function toggleEndDate() {
+            if (isCurrentCheckbox.checked) {
+                endDateGroup.style.display = 'none';
+                endDateInput.removeAttribute('required');
+                endDateInput.value = '';
+            } else {
+                endDateGroup.style.display = 'block';
+                endDateInput.setAttribute('required', 'required');
+            }
+        }
+        
+        isCurrentCheckbox.addEventListener('change', toggleEndDate);
+        toggleEndDate(); // Initialize on page load
+    }
+    
     // Animations for profile components
     anime({
         targets: '.card',
