@@ -13,6 +13,7 @@ $conn = getDBConnection();
 $searchQuery = isset($_GET['q']) ? sanitizeInput($_GET['q']) : '';
 $skillFilter = isset($_GET['skill']) ? sanitizeInput($_GET['skill']) : '';
 $locationFilter = isset($_GET['location']) ? sanitizeInput($_GET['location']) : '';
+$siaTypeFilter = isset($_GET['sia_type']) ? sanitizeInput($_GET['sia_type']) : '';
 
 // Build query based on filters
 $queryParams = [];
@@ -47,6 +48,11 @@ if ($skillFilter) {
 if ($locationFilter) {
     $query .= " AND u.location LIKE ?";
     $queryParams[] = "%$locationFilter%";
+}
+
+if ($siaTypeFilter) {
+    $query .= " AND u.sia_license_type = ?";
+    $queryParams[] = $siaTypeFilter;
 }
 
 $query .= " GROUP BY u.id ORDER BY u.full_name ASC";
@@ -91,6 +97,16 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute();
 $popularLocations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get SIA license types
+$siaTypes = [
+    'Door Supervision',
+    'Security Guarding',
+    'CCTV',
+    'Close Protection',
+    'Cash and Valuables in Transit',
+    'Key Holding'
+];
 ?>
 
 <div class="container mt-4">
@@ -102,7 +118,7 @@ $popularLocations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="card-body">
                     <form method="GET" action="" class="row g-3">
                         <div class="col-md-4">
-                            <label for="search" class="form-label">Search</label>
+                            <label for="q" class="form-label">Search</label>
                             <input type="text" class="form-control" id="q" name="q" 
                                    placeholder="Search by name, job title..." 
                                    value="<?php echo htmlspecialchars($searchQuery); ?>">
@@ -112,5 +128,177 @@ $popularLocations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <input type="text" class="form-control" id="skill" name="skill" 
                                    placeholder="e.g. CCTV, Access Control" 
                                    value="<?php echo htmlspecialchars($skillFilter); ?>">
+                            <?php if (!empty($popularSkills)): ?>
+                                <div class="mt-1">
+                                    <small class="text-muted">Popular: 
+                                        <?php foreach (array_slice($popularSkills, 0, 3) as $skill): ?>
+                                            <a href="?skill=<?php echo urlencode($skill['name']); ?>" class="text-decoration-none">
+                                                <?php echo htmlspecialchars($skill['name']); ?>
+                                            </a>,
+                                        <?php endforeach; ?>
+                                    </small>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <div class
+                        <div class="col-md-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="City, Region..." 
+                                   value="<?php echo htmlspecialchars($locationFilter); ?>">
+                            <?php if (!empty($popularLocations)): ?>
+                                <div class="mt-1">
+                                    <small class="text-muted">Popular: 
+                                        <?php foreach (array_slice($popularLocations, 0, 3) as $location): ?>
+                                            <a href="?location=<?php echo urlencode($location['location']); ?>" class="text-decoration-none">
+                                                <?php echo htmlspecialchars($location['location']); ?>
+                                            </a>,
+                                        <?php endforeach; ?>
+                                    </small>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="sia_type" class="form-label">SIA License Type</label>
+                            <select class="form-select" id="sia_type" name="sia_type">
+                                <option value="">Any</option>
+                                <?php foreach ($siaTypes as $type): ?>
+                                    <option value="<?php echo $type; ?>" <?php echo $siaTypeFilter === $type ? 'selected' : ''; ?>>
+                                        <?php echo $type; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                            <a href="find-professionals.php" class="btn btn-outline-secondary ms-2">Clear Filters</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <?php if (!empty($professionals)): ?>
+            <?php foreach ($professionals as $professional): ?>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex mb-3">
+                                <img src="<?php echo $professional['profile_image'] ?: 'https://placehold.co/100x100?text=Profile'; ?>" 
+                                     class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                <div>
+                                    <h5 class="card-title mb-1"><?php echo htmlspecialchars($professional['full_name']); ?></h5>
+                                    <p class="text-muted mb-0"><?php echo htmlspecialchars($professional['job_title'] ?: 'Security Professional'); ?></p>
+                                </div>
+                            </div>
+                            
+                            <?php if ($professional['location']): ?>
+                                <p class="mb-2">
+                                    <i class="fas fa-map-marker-alt text-secondary me-2"></i>
+                                    <?php echo htmlspecialchars($professional['location']); ?>
+                                </p>
+                            <?php endif; ?>
+                            
+                            <?php if ($professional['sia_license_type']): ?>
+                                <p class="mb-2">
+                                    <i class="fas fa-id-card text-secondary me-2"></i>
+                                    SIA: <?php echo htmlspecialchars($professional['sia_license_type']); ?>
+                                </p>
+                            <?php endif; ?>
+                            
+                            <?php if ($professional['skills']): ?>
+                                <div class="mb-3">
+                                    <?php 
+                                    $skillsArray = explode(',', $professional['skills']);
+                                    $skillsArray = array_unique($skillsArray);
+                                    $skillsArray = array_slice($skillsArray, 0, 3); // Show max 3 skills
+                                    
+                                    foreach ($skillsArray as $skill): 
+                                    ?>
+                                        <span class="badge bg-light text-dark me-1 mb-1"><?php echo htmlspecialchars($skill); ?></span>
+                                    <?php endforeach; ?>
+                                    
+                                    <?php if ($professional['skill_count'] > 3): ?>
+                                        <span class="badge bg-secondary">+<?php echo $professional['skill_count'] - 3; ?> more</span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($professional['connection_status'] === 'accepted'): ?>
+                                <div class="d-grid gap-2">
+                                    <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-outline-primary">View Profile</a>
+                                    <a href="chat.php?with=<?php echo $professional['id']; ?>" class="btn btn-outline-success">
+                                        <i class="fas fa-comment me-2"></i>Message
+                                    </a>
+                                </div>
+                            <?php elseif ($professional['connection_status'] === 'pending' && $professional['is_requester']): ?>
+                                <div class="d-grid gap-2">
+                                    <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-outline-primary">View Profile</a>
+                                    <button class="btn btn-secondary" disabled>Connection Requested</button>
+                                </div>
+                            <?php elseif ($professional['connection_status'] === 'pending' && !$professional['is_requester']): ?>
+                                <div class="d-grid gap-2">
+                                    <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-outline-primary">View Profile</a>
+                                    <div class="btn-group w-100">
+                                        <form action="../includes/ajax/connection.php" method="post" class="w-50">
+                                            <input type="hidden" name="requester_id" value="<?php echo $professional['id']; ?>">
+                                            <input type="hidden" name="action" value="accept">
+                                            <button type="submit" class="btn btn-success w-100">Accept</button>
+                                        </form>
+                                        <form action="../includes/ajax/connection.php" method="post" class="w-50">
+                                            <input type="hidden" name="requester_id" value="<?php echo $professional['id']; ?>">
+                                            <input type="hidden" name="action" value="reject">
+                                            <button type="submit" class="btn btn-danger w-100">Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="d-grid gap-2">
+                                    <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-outline-primary">View Profile</a>
+                                    <form action="../includes/ajax/connection.php" method="post">
+                                        <input type="hidden" name="receiver_id" value="<?php echo $professional['id']; ?>">
+                                        <input type="hidden" name="action" value="connect">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-user-plus me-2"></i>Connect
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <small>
+                                <i class="fas fa-certificate me-1"></i><?php echo $professional['certification_count']; ?> certifications
+                                <i class="fas fa-briefcase ms-2 me-1"></i><?php echo $professional['experience_count']; ?> jobs
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <p class="mb-0">No security professionals found matching your search criteria. Try adjusting your filters or search terms.</p>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animations
+    anime({
+        targets: '.card',
+        translateY: [20, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100),
+        easing: 'easeOutCubic',
+        duration: 800
+    });
+});
+</script>
+
+<?php require_once 'footer.php'; ?>

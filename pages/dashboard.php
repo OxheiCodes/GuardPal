@@ -25,7 +25,10 @@ $stmt = $conn->prepare("
         END as has_location,
         CASE 
             WHEN years_experience > 0 THEN 1 ELSE 0 
-        END as has_experience
+        END as has_experience,
+        CASE 
+            WHEN sia_license_number IS NOT NULL AND sia_license_number != '' THEN 1 ELSE 0 
+        END as has_sia_license
     FROM users
     WHERE id = ?
 ");
@@ -35,13 +38,14 @@ $profileData = $stmt->fetch(PDO::FETCH_ASSOC);
 // Calculate profile completeness percentage
 $profileCompleteness = 0;
 if ($profileData) {
-    $totalFields = 5; // Total number of profile fields we're checking
+    $totalFields = 6; // Total number of profile fields we're checking
     $completedFields = 
         $profileData['has_profile_image'] + 
         $profileData['has_job_title'] + 
         $profileData['has_bio'] + 
         $profileData['has_location'] + 
-        $profileData['has_experience'];
+        $profileData['has_experience'] +
+        $profileData['has_sia_license'];
     
     $profileCompleteness = ($completedFields / $totalFields) * 100;
 }
@@ -78,6 +82,14 @@ $stmt = $conn->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $messageCount = $stmt->fetchColumn();
 
+// Get pending connection requests
+$stmt = $conn->prepare("
+    SELECT COUNT(*) FROM connections 
+    WHERE receiver_id = ? AND status = 'pending'
+");
+$stmt->execute([$_SESSION['user_id']]);
+$pendingRequestsCount = $stmt->fetchColumn();
+
 // Get recent jobs from bookmarks
 $stmt = $conn->prepare("
     SELECT * FROM bookmarks 
@@ -106,14 +118,33 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     <?php endif; ?>
     
+    <?php if ($pendingRequestsCount > 0): ?>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>New Connection Requests!</strong> You have <?php echo $pendingRequestsCount; ?> pending connection requests.
+            <a href="connections.php" class="btn btn-sm btn-primary ms-2">View Requests</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+    
     <div class="row">
         <div class="col-md-3 mb-4">
             <div class="card dashboard-card">
                 <div class="card-body text-center">
                     <i class="fas fa-search fa-3x mb-3 text-primary"></i>
-                    <h5 class="card-title">Search Jobs</h5>
-                    <p class="card-text">Find security jobs that match your skills</p>
-                    <a href="search.php" class="btn btn-primary">Start Search</a>
+                    <h5 class="card-title">Find Jobs</h5>
+                    <p class="card-text">Search security jobs that match your skills</p>
+                    <a href="search.php" class="btn btn-primary">Search Jobs</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3 text-info"></i>
+                    <h5 class="card-title">Find Professionals</h5>
+                    <p class="card-text">Connect with other security professionals</p>
+                    <a href="find-professionals.php" class="btn btn-info">Browse Network</a>
                 </div>
             </div>
         </div>
@@ -132,17 +163,6 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="col-md-3 mb-4">
             <div class="card dashboard-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-users fa-3x mb-3 text-info"></i>
-                    <h5 class="card-title">Network</h5>
-                    <p class="card-text"><?php echo $connectionCount; ?> professional connections</p>
-                    <a href="connections.php" class="btn btn-info">View Network</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="card dashboard-card">
-                <div class="card-body text-center">
                     <i class="fas fa-comment fa-3x mb-3 text-success"></i>
                     <h5 class="card-title">Messages</h5>
                     <p class="card-text"><?php echo $messageCount; ?> new messages</p>
@@ -154,6 +174,69 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     <div class="row mt-4">
         <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Your Network</h3>
+                <a href="connections.php" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+            
+            <?php
+            // Get recent connections
+            $stmt = $conn->prepare("
+                SELECT c.*, 
+                       u.id as connection_id,
+                       u.username, 
+                       u.full_name, 
+                       u.job_title,
+                       u.profile_image,
+                       u.location
+                FROM connections c
+                JOIN users u ON (
+                    (c.requester_id = ? AND c.receiver_id = u.id) OR 
+                    (c.receiver_id = ? AND c.requester_id = u.id)
+                )
+                WHERE c.status = 'accepted'
+                ORDER BY c.updated_at DESC
+                LIMIT 3
+            ");
+            $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
+            $recentConnections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            ?>
+            
+            <?php if (!empty($recentConnections)): ?>
+                <div class="row">
+                    <?php foreach ($recentConnections as $connection): ?>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <img src="<?php echo $connection['profile_image'] ?: 'https://placehold.co/100x100?text=Profile'; ?>" 
+                                         alt="Profile" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                    <h5 class="card-title"><?php echo htmlspecialchars($connection['full_name']); ?></h5>
+                                    <p class="card-text text-muted"><?php echo htmlspecialchars($connection['job_title'] ?: 'Security Professional'); ?></p>
+                                    <?php if ($connection['location']): ?>
+                                        <p class="card-text small">
+                                            <i class="fas fa-map-marker-alt me-1"></i> <?php echo htmlspecialchars($connection['location']); ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <div class="d-grid gap-2">
+                                        <a href="profile.php?id=<?php echo $connection['connection_id']; ?>" class="btn btn-sm btn-outline-primary">View Profile</a>
+                                        <a href="chat.php?with=<?php echo $connection['connection_id']; ?>" class="btn btn-sm btn-outline-success">Message</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div class="text-center mt-2 mb-4">
+                    <a href="find-professionals.php" class="btn btn-primary">Find More Professionals</a>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-light">
+                    <p>You haven't connected with any security professionals yet. Start building your network!</p>
+                    <a href="find-professionals.php" class="btn btn-primary mt-2">Find Professionals</a>
+                </div>
+            <?php endif; ?>
+            
             <h3>Recent Jobs</h3>
             <?php if (!empty($recentJobs)): ?>
                 <div class="row">
@@ -222,6 +305,41 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <a href="profile.php" class="btn btn-outline-primary btn-sm">View Profile</a>
                         <a href="edit-profile.php" class="btn btn-outline-secondary btn-sm">Edit Profile</a>
                     </div>
+                </div>
+            </div>
+            
+            <?php if ($pendingRequestsCount > 0): ?>
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Connection Requests</h5>
+                </div>
+                <div class="card-body">
+                    <p>You have <?php echo $pendingRequestsCount; ?> pending connection <?php echo $pendingRequestsCount == 1 ? 'request' : 'requests'; ?>.</p>
+                    <a href="connections.php" class="btn btn-warning">View Requests</a>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="search.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-search me-2"></i> Search Jobs
+                    </a>
+                    <a href="find-professionals.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-2"></i> Find Professionals
+                    </a>
+                    <a href="edit-skills.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-cogs me-2"></i> Update Skills
+                    </a>
+                    <a href="edit-certifications.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-certificate me-2"></i> Update Certifications
+                    </a>
+                    <a href="edit-experience.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-briefcase me-2"></i> Update Experience
+                    </a>
                 </div>
             </div>
         </div>

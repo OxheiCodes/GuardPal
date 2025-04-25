@@ -28,16 +28,19 @@ require_once '../includes/config.php';
                             <a class="nav-link" href="dashboard.php">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="search.php">Search Jobs</a>
+                            <a class="nav-link" href="search.php">Find Jobs</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="bookmarks.php">Bookmarks</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="connections.php">Network</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="chat.php">Messages</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="networkDropdown" role="button" data-bs-toggle="dropdown">
+                                Network
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="networkDropdown">
+                                <li><a class="dropdown-item" href="network-search.php">Discover Professionals</a></li>
+                                <li><a class="dropdown-item" href="find-professionals.php">Search Professionals</a></li>
+                                <li><a class="dropdown-item" href="connections.php">My Connections</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="chat.php">Messages</a></li>
+                            </ul>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
@@ -46,7 +49,11 @@ require_once '../includes/config.php';
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                                 <li><a class="dropdown-item" href="profile.php">View Profile</a></li>
                                 <li><a class="dropdown-item" href="edit-profile.php">Edit Profile</a></li>
+                                <li><a class="dropdown-item" href="edit-skills.php">Update Skills</a></li>
+                                <li><a class="dropdown-item" href="edit-certifications.php">Update Certifications</a></li>
+                                <li><a class="dropdown-item" href="edit-experience.php">Update Experience</a></li>
                                 <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="bookmarks.php">Saved Jobs</a></li>
                                 <li><a class="dropdown-item" href="logout.php">Logout</a></li>
                             </ul>
                         </li>
