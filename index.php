@@ -21,7 +21,7 @@ if (isset($_SESSION['user_id'])) {
 <body class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="#">GuardPal</a>
+            <a class="navbar-brand" href="index.php">GuardPal</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -67,7 +67,7 @@ if (isset($_SESSION['user_id'])) {
                 <a href="pages/login.php" class="btn btn-outline-primary btn-lg ms-2">Login</a>
             </div>
             <div class="col-md-6">
-                <img src="https://placehold.co/600x400" alt="Security Professional" class="img-fluid rounded shadow">
+                <img src="assets\img\Fotolia_52367572_M.jpg" alt="Security Professional" class="img-fluid rounded shadow">
             </div>
         </div>
         

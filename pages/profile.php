@@ -297,3 +297,120 @@ $workExperience = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <i class="fas fa-plus"></i>
                         </a>
                     <?php endif; ?>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($workExperience)): ?>
+                        <div class="timeline">
+                            <?php foreach ($workExperience as $experience): ?>
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <div class="text-primary fw-bold">
+                                            <?php echo date('M Y', strtotime($experience['start_date'])); ?> - 
+                                            <?php echo $experience['is_current'] ? 'Present' : date('M Y', strtotime($experience['end_date'])); ?>
+                                        </div>
+                                        <?php 
+                                        if ($experience['is_current']) {
+                                            $startDate = new DateTime($experience['start_date']);
+                                            $endDate = new DateTime();
+                                            $interval = $startDate->diff($endDate);
+                                            $duration = '';
+                                            if ($interval->y > 0) {
+                                                $duration .= $interval->y . ' yr' . ($interval->y > 1 ? 's' : '');
+                                            }
+                                            if ($interval->m > 0) {
+                                                $duration .= ($duration ? ' ' : '') . $interval->m . ' mo' . ($interval->m > 1 ? 's' : '');
+                                            }
+                                        } else {
+                                            $startDate = new DateTime($experience['start_date']);
+                                            $endDate = new DateTime($experience['end_date']);
+                                            $interval = $startDate->diff($endDate);
+                                            $duration = '';
+                                            if ($interval->y > 0) {
+                                                $duration .= $interval->y . ' yr' . ($interval->y > 1 ? 's' : '');
+                                            }
+                                            if ($interval->m > 0) {
+                                                $duration .= ($duration ? ' ' : '') . $interval->m . ' mo' . ($interval->m > 1 ? 's' : '');
+                                            }
+                                        }
+                                        ?>
+                                        <div class="text-muted">
+                                            <?php echo $duration; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <h5 class="mb-1"><?php echo htmlspecialchars($experience['job_title']); ?></h5>
+                                        <div class="fs-6 mb-2"><?php echo htmlspecialchars($experience['company_name']); ?></div>
+                                        <div class="text-muted mb-2">
+                                            <i class="fas fa-map-marker-alt me-1"></i> <?php echo htmlspecialchars($experience['location'] ?: 'Location not specified'); ?>
+                                        </div>
+                                        <?php if ($experience['description']): ?>
+                                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($experience['description'])); ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted">No work experience added yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Similar Professionals Section (if viewing own profile) -->
+        <?php if ($isOwnProfile): ?>
+            <?php
+            // Get similar professionals based on skills
+            $stmt = $conn->prepare("
+                SELECT DISTINCT u.id, u.full_name, u.job_title, u.location, u.profile_image
+                FROM users u
+                JOIN skills us ON u.id = us.user_id
+                JOIN skills my ON my.user_id = ?
+                WHERE u.id != ? AND us.name = my.name
+                GROUP BY u.id
+                ORDER BY COUNT(us.id) DESC
+                LIMIT 3
+            ");
+            $stmt->execute([$userId, $userId]);
+            $similarProfessionals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!empty($similarProfessionals)):
+            ?>
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Similar Professionals</h5>
+                        <a href="find-professionals.php" class="btn btn-sm btn-outline-primary">Find More</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <?php foreach ($similarProfessionals as $professional): ?>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <img src="<?php echo $professional['profile_image'] ?: 'https://placehold.co/100x100?text=Profile'; ?>" 
+                                                 alt="Profile" class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                            <h5 class="card-title"><?php echo htmlspecialchars($professional['full_name']); ?></h5>
+                                            <p class="card-text text-muted"><?php echo htmlspecialchars($professional['job_title'] ?: 'Security Professional'); ?></p>
+                                            <?php if ($professional['location']): ?>
+                                                <p class="mb-2 small">
+                                                    <i class="fas fa-map-marker-alt me-1"></i> 
+                                                    <?php echo htmlspecialchars($professional['location']); ?>
+                                                </p>
+                                            <?php endif; ?>
+                                            <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-sm btn-outline-primary">View Profile</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script src="../assets/js/profile.js"></script>
+<?php require_once 'footer.php'; ?>
