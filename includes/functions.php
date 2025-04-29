@@ -18,10 +18,27 @@ function requireLogin() {
 }
 
 function searchJobs($query, $page = 1) {
+    // Always append security-related keywords to the search
+    $securityKeywords = ['security', 'guard', 'officer', 'protection', 'surveillance', 'SIA'];
+    
+    // If the user hasn't included any security terms, add them
+    $hasSecurityTerm = false;
+    foreach ($securityKeywords as $keyword) {
+        if (stripos($query, $keyword) !== false) {
+            $hasSecurityTerm = true;
+            break;
+        }
+    }
+    
+    if (!$hasSecurityTerm) {
+        // Add "security" to the query if no security terms are found
+        $query .= " security";
+    }
+    
     $curl = curl_init();
 
     curl_setopt_array($curl, [
-        CURLOPT_URL => "https://jsearch.p.rapidapi.com/search?query=" . urlencode($query . " security") . "&page=" . $page . "&num_pages=1&country=us&date_posted=all",
+        CURLOPT_URL => "https://jsearch.p.rapidapi.com/search?query=" . urlencode($query) . "&page=" . $page . "&num_pages=1&country=us&date_posted=all",
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => "",
         CURLOPT_MAXREDIRS => 10,
@@ -42,7 +59,28 @@ function searchJobs($query, $page = 1) {
     if ($err) {
         return false;
     } else {
-        return json_decode($response, true);
+        $jobsData = json_decode($response, true);
+        
+        // Further filter results to ensure they're security-related
+        if (isset($jobsData['data']) && is_array($jobsData['data'])) {
+            $filteredJobs = array_filter($jobsData['data'], function($job) use ($securityKeywords) {
+                $jobTitle = strtolower($job['job_title'] ?? '');
+                $jobDescription = strtolower($job['job_description'] ?? '');
+                
+                // Check if job title or description contains security-related keywords
+                foreach ($securityKeywords as $keyword) {
+                    $keyword = strtolower($keyword);
+                    if (strpos($jobTitle, $keyword) !== false || strpos($jobDescription, $keyword) !== false) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            
+            $jobsData['data'] = array_values($filteredJobs); // Reset array keys
+        }
+        
+        return $jobsData;
     }
 }
 
