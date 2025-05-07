@@ -1,11 +1,36 @@
+/* Import Roboto font */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Roboto', sans-serif;
     background-color: #f8f9fa;
 }
 
 .navbar-brand {
-    font-weight: bold;
+    font-weight: 700;
     font-size: 1.5rem;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand span {
+    color: #0d6efd;
+}
+
+.logo-shield {
+    height: 30px;
+    margin-right: 8px;
+    vertical-align: text-bottom;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
 }
 
 .card-hover {
@@ -149,6 +174,15 @@ body {
     font-size: 0.85rem;
 }
 
+/* Footer styling */
+footer {
+    font-family: 'Roboto', sans-serif;
+}
+
+footer h5 {
+    font-weight: 700;
+}
+
 /* Animations */
 .fade-in {
     opacity: 0;
@@ -183,5 +217,21 @@ body {
 @media (max-width: 767.98px) {
     .timeline::before {
         left: 20px;
+    }
+}
+
+/* Mobile Navigation Adjustments */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        text-align: center;
+    }
+    
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+    
+    .navbar-brand.mx-auto {
+        margin-right: auto !important;
+        margin-left: 0 !important;
     }
 }

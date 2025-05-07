@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+  <!-- Shield Icon -->
+  <g transform="translate(20, 15) scale(0.9)">
+    <path d="M55,20 L55,20 L55,20 C55,20 40,15 25,20 C10,25 5,60 25,85 C45,110 55,100 55,100 C55,100 65,110 85,85 C105,60 100,25 85,20 C70,15 55,20 55,20 Z" fill="#0d6efd" stroke="#0d6efd" stroke-width="2"/>
+    <path d="M55,35 L55,35 L55,35 C55,35 45,32 35,35 C25,38 22,60 35,75 C48,90 55,85 55,85 C55,85 62,90 75,75 C88,60 85,38 75,35 C65,32 55,35 55,35 Z" fill="white" stroke="white" stroke-width="1"/>
+    <path d="M55,50 L55,50 L55,50 C55,50 50,48 45,50 C40,52 38,65 45,73 C52,81 55,78 55,78 C55,78 58,81 65,73 C72,65 70,52 65,50 C60,48 55,50 55,50 Z" fill="#0d6efd" stroke="#0d6efd" stroke-width="1"/>
+    <path d="M50,65 L60,65 M55,60 L55,70" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Text -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&amp;display=swap');
+    .logo-text {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+  </style>
+  <text x="110" y="70" class="logo-text" fill="#333333" font-size="45">
+    Guard<tspan fill="#0d6efd">Pal</tspan>
+  </text>
+  <text x="110" y="90" fill="#666666" font-size="15" font-family="'Roboto', sans-serif">
+    Security Jobs Platform
+  </text>
+</svg>
