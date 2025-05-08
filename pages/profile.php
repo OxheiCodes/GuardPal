@@ -73,6 +73,23 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$userId]);
 $workExperience = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get agency connection requests if viewing own profile
+$agencyRequests = [];
+if ($isOwnProfile) {
+    $stmt = $conn->prepare("
+        SELECT ac.*, 
+               a.id as agency_id,
+               a.name as agency_name,
+               a.logo_image
+        FROM agency_connections ac
+        JOIN agencies a ON ac.agency_id = a.id
+        WHERE ac.user_id = ? AND ac.status = 'pending'
+        ORDER BY ac.created_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $agencyRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
 <div class="container mt-4">
@@ -196,6 +213,46 @@ $workExperience = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
         </div>
+        
+        <!-- Agency Connection Requests (only shown on own profile) -->
+        <?php if ($isOwnProfile && !empty($agencyRequests)): ?>
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">Agency Connection Requests (<?php echo count($agencyRequests); ?>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <?php foreach ($agencyRequests as $request): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="<?php echo $request['logo_image'] ?: 'https://placehold.co/50x50?text=Agency'; ?>" 
+                                             alt="Agency Logo" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-0"><?php echo htmlspecialchars($request['agency_name']); ?></h6>
+                                            <small class="text-muted">Wants to connect with you</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex">
+                                        <a href="view_agency.php?id=<?php echo $request['agency_id']; ?>" class="btn btn-sm btn-outline-secondary me-2">View Profile</a>
+                                        <form action="../includes/ajax/user_agency_connection.php" method="post" class="me-2">
+                                            <input type="hidden" name="agency_id" value="<?php echo $request['agency_id']; ?>">
+                                            <input type="hidden" name="action" value="accept">
+                                            <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                        </form>
+                                        <form action="../includes/ajax/user_agency_connection.php" method="post">
+                                            <input type="hidden" name="agency_id" value="<?php echo $request['agency_id']; ?>">
+                                            <input type="hidden" name="action" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         
         <!-- Skills Section -->
         <div class="col-md-4 mb-4">
@@ -399,6 +456,64 @@ $workExperience = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 </p>
                                             <?php endif; ?>
                                             <a href="profile.php?id=<?php echo $professional['id']; ?>" class="btn btn-sm btn-outline-primary">View Profile</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <?php
+            // Get connected agencies
+            $stmt = $conn->prepare("
+                SELECT a.id, a.name, a.logo_image, a.website,
+                       (SELECT COUNT(*) FROM job_listings j WHERE j.agency_id = a.id AND j.is_active = 1) as active_jobs
+                FROM agency_connections ac
+                JOIN agencies a ON ac.agency_id = a.id
+                WHERE ac.user_id = ? AND ac.status = 'accepted'
+                ORDER BY a.name
+                LIMIT 3
+            ");
+            $stmt->execute([$userId]);
+            $connectedAgencies = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!empty($connectedAgencies)):
+            ?>
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Connected Agencies</h5>
+                        <a href="browse_agencies.php" class="btn btn-sm btn-outline-primary">View All Agencies</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <?php foreach ($connectedAgencies as $agency): ?>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body text-center">
+                                            <img src="<?php echo $agency['logo_image'] ?: 'https://placehold.co/100x100?text=Agency'; ?>" 
+                                                 alt="Agency Logo" class="rounded mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                            <h5 class="card-title"><?php echo htmlspecialchars($agency['name']); ?></h5>
+                                            <?php if ($agency['website']): ?>
+                                                <p class="mb-2 small">
+                                                    <i class="fas fa-globe me-1"></i> 
+                                                    <a href="<?php echo htmlspecialchars($agency['website']); ?>" target="_blank" class="text-decoration-none">
+                                                        <?php echo htmlspecialchars($agency['website']); ?>
+                                                    </a>
+                                                </p>
+                                            <?php endif; ?>
+                                            <?php if ($agency['active_jobs'] > 0): ?>
+                                                <p class="mb-2">
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-briefcase me-1"></i>
+                                                        <?php echo $agency['active_jobs']; ?> Active Jobs
+                                                    </span>
+                                                </p>
+                                            <?php endif; ?>
+                                            <a href="view_agency.php?id=<?php echo $agency['id']; ?>" class="btn btn-sm btn-outline-primary">View Profile</a>
                                         </div>
                                     </div>
                                 </div>

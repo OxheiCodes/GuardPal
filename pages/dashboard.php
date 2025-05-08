@@ -74,6 +74,14 @@ $stmt = $conn->prepare("
 $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
 $connectionCount = $stmt->fetchColumn();
 
+// Get agency connection count
+$stmt = $conn->prepare("
+    SELECT COUNT(*) FROM agency_connections 
+    WHERE user_id = ? AND status = 'accepted'
+");
+$stmt->execute([$_SESSION['user_id']]);
+$agencyConnectionCount = $stmt->fetchColumn();
+
 // Get message count
 $stmt = $conn->prepare("
     SELECT COUNT(*) FROM messages 
@@ -90,6 +98,14 @@ $stmt = $conn->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $pendingRequestsCount = $stmt->fetchColumn();
 
+// Get pending agency connection requests
+$stmt = $conn->prepare("
+    SELECT COUNT(*) FROM agency_connections 
+    WHERE user_id = ? AND status = 'pending'
+");
+$stmt->execute([$_SESSION['user_id']]);
+$pendingAgencyRequestsCount = $stmt->fetchColumn();
+
 // Get recent jobs from bookmarks
 $stmt = $conn->prepare("
     SELECT * FROM bookmarks 
@@ -99,6 +115,19 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$_SESSION['user_id']]);
 $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get recent agency jobs
+$stmt = $conn->prepare("
+    SELECT j.*, a.name as agency_name, a.logo_image
+    FROM job_listings j
+    JOIN agencies a ON j.agency_id = a.id
+    JOIN agency_connections ac ON j.agency_id = ac.agency_id
+    WHERE ac.user_id = ? AND ac.status = 'accepted' AND j.is_active = 1
+    ORDER BY j.created_at DESC
+    LIMIT 3
+");
+$stmt->execute([$_SESSION['user_id']]);
+$recentAgencyJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container mt-4">
@@ -118,9 +147,16 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     <?php endif; ?>
     
-    <?php if ($pendingRequestsCount > 0): ?>
+    <?php if ($pendingRequestsCount > 0 || $pendingAgencyRequestsCount > 0): ?>
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>New Connection Requests!</strong> You have <?php echo $pendingRequestsCount; ?> pending connection requests.
+            <strong>New Connection Requests!</strong> You have 
+            <?php if ($pendingRequestsCount > 0): ?>
+                <?php echo $pendingRequestsCount; ?> pending professional connection <?php echo $pendingRequestsCount > 1 ? 'requests' : 'request'; ?>
+            <?php endif; ?>
+            <?php if ($pendingRequestsCount > 0 && $pendingAgencyRequestsCount > 0): ?> and <?php endif; ?>
+            <?php if ($pendingAgencyRequestsCount > 0): ?>
+                <?php echo $pendingAgencyRequestsCount; ?> pending agency connection <?php echo $pendingAgencyRequestsCount > 1 ? 'requests' : 'request'; ?>
+            <?php endif; ?>.
             <a href="connections.php" class="btn btn-sm btn-primary ms-2">View Requests</a>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -141,10 +177,10 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="col-md-3 mb-4">
             <div class="card dashboard-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-users fa-3x mb-3 text-info"></i>
-                    <h5 class="card-title">Find Professionals</h5>
-                    <p class="card-text">Connect with other security professionals</p>
-                    <a href="find-professionals.php" class="btn btn-info">Browse Network</a>
+                    <i class="fas fa-building fa-3x mb-3 text-success"></i>
+                    <h5 class="card-title">Security Agencies</h5>
+                    <p class="card-text">Connected with <?php echo $agencyConnectionCount; ?> agencies</p>
+                    <a href="browse_agencies.php" class="btn btn-success">Browse Agencies</a>
                 </div>
             </div>
         </div>
@@ -163,10 +199,10 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="col-md-3 mb-4">
             <div class="card dashboard-card">
                 <div class="card-body text-center">
-                    <i class="fas fa-comment fa-3x mb-3 text-success"></i>
+                    <i class="fas fa-comment fa-3x mb-3 text-info"></i>
                     <h5 class="card-title">Messages</h5>
                     <p class="card-text"><?php echo $messageCount; ?> new messages</p>
-                    <a href="chat.php" class="btn btn-success">Open Chat</a>
+                    <a href="chat.php" class="btn btn-info">Open Chat</a>
                 </div>
             </div>
         </div>
@@ -226,10 +262,6 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     <?php endforeach; ?>
                 </div>
-                
-                <div class="text-center mt-2 mb-4">
-                    <a href="find-professionals.php" class="btn btn-primary">Find More Professionals</a>
-                </div>
             <?php else: ?>
                 <div class="alert alert-light">
                     <p>You haven't connected with any security professionals yet. Start building your network!</p>
@@ -237,7 +269,45 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
             
-            <h3>Recent Jobs</h3>
+            <?php if (!empty($recentAgencyJobs)): ?>
+                <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+                    <h3>Agency Job Listings</h3>
+                    <a href="browse_agencies.php" class="btn btn-outline-success btn-sm">View All Agencies</a>
+                </div>
+                <div class="row">
+                    <?php foreach ($recentAgencyJobs as $job): ?>
+                        <div class="col-md-6 mb-4">
+                            <div class="card job-card card-hover">
+                                <div class="card-body job-card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="<?php echo $job['logo_image'] ?: 'https://placehold.co/50x50?text=Agency'; ?>" 
+                                             alt="Agency" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <span class="company-name"><?php echo htmlspecialchars($job['agency_name']); ?></span>
+                                    </div>
+                                    <h5 class="job-title"><?php echo htmlspecialchars($job['job_title']); ?></h5>
+                                    <div class="mb-2">
+                                        <span class="badge badge-location me-2">
+                                            <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($job['job_location'] ?: 'Remote'); ?>
+                                        </span>
+                                        <?php if ($job['job_type']): ?>
+                                            <span class="badge badge-type">
+                                                <i class="fas fa-briefcase"></i> <?php echo htmlspecialchars($job['job_type']); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <p class="card-text small">
+                                        <?php echo htmlspecialchars(substr($job['job_description'], 0, 100)) . '...'; ?>
+                                    </p>
+                                    <a href="view_job.php?id=<?php echo urlencode($job['id']); ?>" 
+                                       class="btn btn-outline-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            
+            <h3 class="mt-4">Recent Jobs</h3>
             <?php if (!empty($recentJobs)): ?>
                 <div class="row">
                     <?php foreach ($recentJobs as $job): ?>
@@ -297,6 +367,11 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Agency Connections</span>
+                        <span class="badge bg-success"><?php echo $agencyConnectionCount; ?></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
                         <span>Saved Jobs</span>
                         <span class="badge bg-warning"><?php echo $bookmarkCount; ?></span>
                     </div>
@@ -308,13 +383,18 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
             
-            <?php if ($pendingRequestsCount > 0): ?>
+            <?php if ($pendingRequestsCount > 0 || $pendingAgencyRequestsCount > 0): ?>
             <div class="card mt-4">
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0">Connection Requests</h5>
                 </div>
                 <div class="card-body">
-                    <p>You have <?php echo $pendingRequestsCount; ?> pending connection <?php echo $pendingRequestsCount == 1 ? 'request' : 'requests'; ?>.</p>
+                    <?php if ($pendingRequestsCount > 0): ?>
+                        <p>You have <?php echo $pendingRequestsCount; ?> pending professional connection <?php echo $pendingRequestsCount == 1 ? 'request' : 'requests'; ?>.</p>
+                    <?php endif; ?>
+                    <?php if ($pendingAgencyRequestsCount > 0): ?>
+                        <p>You have <?php echo $pendingAgencyRequestsCount; ?> pending agency connection <?php echo $pendingAgencyRequestsCount == 1 ? 'request' : 'requests'; ?>.</p>
+                    <?php endif; ?>
                     <a href="connections.php" class="btn btn-warning">View Requests</a>
                 </div>
             </div>
@@ -330,6 +410,9 @@ $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </a>
                     <a href="find-professionals.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-users me-2"></i> Find Professionals
+                    </a>
+                    <a href="browse_agencies.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-building me-2"></i> Browse Agencies
                     </a>
                     <a href="edit-skills.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cogs me-2"></i> Update Skills

@@ -6,6 +6,9 @@ require_once 'includes/config.php';
 if (isset($_SESSION['user_id'])) {
     header('Location: pages/dashboard.php');
     exit();
+} elseif (isset($_SESSION['agency_id'])) {
+    header('Location: pages/agency_dashboard.php');
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -36,11 +39,23 @@ if (isset($_SESSION['user_id'])) {
             </button>
             <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item mx-2">
-                        <a class="nav-link" href="pages/login.php">Login</a>
+                    <li class="nav-item mx-2 dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Login
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="loginDropdown">
+                            <li><a class="dropdown-item" href="pages/login.php">Login as Professional</a></li>
+                            <li><a class="dropdown-item" href="pages/agency_login.php">Login as Agency</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item mx-2">
-                        <a class="nav-link" href="pages/register.php">Register</a>
+                    <li class="nav-item mx-2 dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="registerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Register
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="registerDropdown">
+                            <li><a class="dropdown-item" href="pages/register.php">Register as Professional</a></li>
+                            <li><a class="dropdown-item" href="pages/agency_register.php">Register as Agency</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
@@ -72,8 +87,10 @@ if (isset($_SESSION['user_id'])) {
                         <span>Showcase your SIA license credentials</span>
                     </div>
                 </div>
-                <a href="pages/register.php" class="btn btn-primary btn-lg">Get Started</a>
-                <a href="pages/login.php" class="btn btn-outline-primary btn-lg ms-2">Login</a>
+                <div class="d-flex flex-wrap">
+                    <a href="pages/register.php" class="btn btn-primary btn-lg me-2 mb-2">Security Professionals</a>
+                    <a href="pages/agency_register.php" class="btn btn-success btn-lg mb-2">Security Agencies</a>
+                </div>
             </div>
             <div class="col-md-6 text-center">
                 <!-- Inline SVG for the full logo -->
@@ -104,18 +121,29 @@ if (isset($_SESSION['user_id'])) {
                 <h2>How GuardPal Works</h2>
                 <p class="lead">The easiest way to find security jobs and connect with professionals</p>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-building fa-2x text-primary"></i>
+                        </div>
+                        <h4>Agencies Post Jobs</h4>
+                        <p>Security agencies create profiles and post job listings for security professionals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center p-4">
                         <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                             <i class="fas fa-user-plus fa-2x text-primary"></i>
                         </div>
                         <h4>Create Profile</h4>
-                        <p>Sign up and create your professional profile with your skills, certifications, and SIA license details.</p>
+                        <p>Security professionals sign up and showcase their skills, certifications, and SIA license details.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center p-4">
                         <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
@@ -126,14 +154,57 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-3 mb-4">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center p-4">
                         <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                             <i class="fas fa-handshake fa-2x text-primary"></i>
                         </div>
                         <h4>Connect & Apply</h4>
-                        <p>Connect with other security professionals and apply directly to jobs that interest you.</p>
+                        <p>Connect with agencies and apply directly to jobs that interest you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="fas fa-building fa-lg"></i>
+                            </div>
+                            <h3 class="mb-0">For Security Agencies</h3>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Create your agency profile</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Post unlimited job listings</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Connect with qualified security professionals</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Browse profiles with verified SIA credentials</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Manage all your applications in one place</li>
+                        </ul>
+                        <a href="pages/agency_register.php" class="btn btn-success">Register Your Agency</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="fas fa-user-shield fa-lg"></i>
+                            </div>
+                            <h3 class="mb-0">For Security Professionals</h3>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i> Create your professional profile</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i> Showcase your SIA license and certifications</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i> Connect with top security agencies</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i> Apply for jobs with a single click</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i> Network with other security professionals</li>
+                        </ul>
+                        <a href="pages/register.php" class="btn btn-primary">Register as a Professional</a>
                     </div>
                 </div>
             </div>
@@ -159,8 +230,10 @@ if (isset($_SESSION['user_id'])) {
                 <div class="col-md-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="pages/login.php" class="text-decoration-none">Login</a></li>
-                        <li><a href="pages/register.php" class="text-decoration-none">Register</a></li>
+                        <li><a href="pages/login.php" class="text-decoration-none">Login as Professional</a></li>
+                        <li><a href="pages/agency_login.php" class="text-decoration-none">Login as Agency</a></li>
+                        <li><a href="pages/register.php" class="text-decoration-none">Register as Professional</a></li>
+                        <li><a href="pages/agency_register.php" class="text-decoration-none">Register as Agency</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 text-md-end">

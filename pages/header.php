@@ -47,6 +47,7 @@ require_once '../includes/config.php';
                             <ul class="dropdown-menu" aria-labelledby="networkDropdown">
                                 <li><a class="dropdown-item" href="network-search.php">Discover Professionals</a></li>
                                 <li><a class="dropdown-item" href="find-professionals.php">Search Professionals</a></li>
+                                <li><a class="dropdown-item" href="browse_agencies.php">Browse Agencies</a></li>
                                 <li><a class="dropdown-item" href="connections.php">My Connections</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="chat.php">Messages</a></li>
@@ -80,3 +81,12 @@ require_once '../includes/config.php';
         </div>
     </nav>
     <div class="flex-grow-1">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="mt-4 mb-3">Welcome to GuardPal</h1>
+                    <p>Your trusted platform for finding security jobs and professionals.</p>
+                </div>
+            </div>
+        </div>
+    </div>
